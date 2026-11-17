@@ -1,0 +1,87 @@
+#####################################################################################
+#                                 G4SEE OUTPUT FILE                                 #
+#####################################################################################
+
+Simulation started:           2026/09/29 14:42:49
+
+Geant4 release:               geant4-11-02-patch-02 [MT]   (21-June-2024)
+
+G4SEE version:                v1.0-0-g8c6fc45
+G4SEE tag:                    v1.0
+G4SEE commit ID:              8c6fc45
+G4SEE branch:                 HEAD
+
+Number of primary particles:  200000
+
+Total CPU time (s):           15.4061
+CPU time / primary (s):       7.70306e-05
+
+Output directory:             /home
+Input macro file:             /home/G4SEE_input_files/examples/tutorial_1-4.mac
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++                               Input Macro Commands                                +
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#
+# G4SEE Single Event Effect simulation toolkit
+# ============================================
+# SPDX-FileCopyrightText: © 2022 CERN for the benefit of the G4SEE Collaboration <https://cern.ch/g4see>
+# SPDX-License-Identifier: CC-BY-4.0
+#
+########################################################
+###       G4SEE Tutorial 1.4 - Scoring, SEE XS       ###
+########################################################
+
+#################
+### General G4 commands
+
+/run/printProgress                  1000
+/run/numberOfThreads                4
+/control/cout/ignoreThreadsExcept   0
+
+/random/setSeeds                    1234, 4321  
+
+/tracking/verbose                   0
+
+#################
+### Geometry
+
+# BULK COMMAND                      MATERIAL            WIDTH unit  	THICK unit  	BIAS
+/SEE/geometry/Bulk                  G4_Si               6 um            1 um            false
+# SV COMMAND                        POSITION unit       WIDTH unit  	THICK unit  	BIAS
+/SEE/geometry/SV                    0 0 0 nm            310 310 nm      310 nm          false
+# BEOL COMMAND                      MATERIAL            WIDTH unit      THICK unit      NAME        BIAS
+/SEE/geometry/BEOL/addLayer         G4_SILICON_DIOXIDE  6 um            6 um            Oxide       false
+
+#################
+### Initialize
+/run/initialize
+
+#################
+### Primaries
+
+/gps/particle                       proton
+/gps/ene/mono                       1 MeV
+/gps/ene/sigma                      25 keV
+/gps/direction                      0 0 -1
+/gps/pos/type                       Plane
+/gps/pos/shape                      Rectangle
+/gps/pos/centre                     0 0 10 um
+/gps/pos/halfx                      0.5 um
+/gps/pos/halfy                      0.5 um
+
+#################
+### Scoring (standard)
+
+/SEE/scoring/standard/Ekin          0       proton
+/SEE/scoring/setHistogram           lin     200     0       2   MeV
+
+/SEE/scoring/standard/Edep          0
+/SEE/scoring/setHistogram           log     300     0.0001  1   MeV
+
+/SEE/scoring/dumpHistogramsAfter    10000
+
+#################
+### Run
+/run/beamOn                         200000

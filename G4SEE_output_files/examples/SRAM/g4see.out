@@ -1,0 +1,133 @@
+#####################################################################################
+#                                 G4SEE OUTPUT FILE                                 #
+#####################################################################################
+
+Simulation started:           2026/10/05 18:51:32
+
+Geant4 release:               geant4-11-02-patch-02 [MT]   (21-June-2024)
+
+G4SEE version:                v1.0-0-g8c6fc45
+G4SEE tag:                    v1.0
+G4SEE commit ID:              8c6fc45
+G4SEE branch:                 HEAD
+
+Number of primary particles:  50000
+
+Total CPU time (s):           15.9617
+CPU time / primary (s):       0.000319233
+
+Output directory:             /home/G4SEE_output_files/examples/SRAM
+Input macro file:             /home/G4SEE_input_files/examples/SRAM_temp.mac
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++                               Input Macro Commands                                +
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#
+# G4SEE Single Event Effect simulation toolkit
+# ============================================
+# SPDX-FileCopyrightText: © 2022 CERN for the benefit of the G4SEE Collaboration <https://cern.ch/g4see>
+# SPDX-License-Identifier: CC-BY-4.0
+#
+##########################################
+### Example input macro file for G4SEE ###
+##########################################
+
+/run/numberOfThreads                4
+/run/printProgress                  1000
+/tracking/verbose                   0          # use only for testing
+
+##############
+### Materials
+
+# define material                   NAME       DENSITY      ELEMENTS (name/ch.symbol, stoic.ratio,...)
+/SEE/material/addMaterial           Si3N4      3.17 g/cm3   Si   3  N 4
+
+# define mixture                    NAME       DENSITY      MATERIALS (name, ratio, name, ratio,...)
+/SEE/material/addMixture            BEOLmix    3. g/cm3     G4_Cu 0.2   Si3N4 0.4   G4_SILICON_DIOXIDE 0.4
+
+##############
+### Geometry
+
+# BULK                              MATERIAL            WIDTH unit  THICK unit  BIAS
+/SEE/geometry/Bulk                  G4_Si               5. um       1. um       true
+
+# SV                                POSITION unit       WIDTH unit  THICK unit  BIAS
+/SEE/geometry/SV                    0 0 -200 nm         600 800 nm  600 nm      true
+
+# BEOL                              MATERIAL            WIDTH unit  THICK unit  NAME       BIAS
+/SEE/geometry/BEOL/addLayer         BEOLmix             5. um       1.6 um      BEOLlayer  false
+
+
+##############
+### Biasing
+/SEE/biasing/biasParticle           proton
+/SEE/biasing/biasProcess            protonInelastic
+/SEE/biasing/biasFactor             1000
+
+##############
+### Physics
+/SEE/physics/addPhysics             G4EmStandardPhysics_option4         # Default EM physics
+/SEE/physics/addPhysics             G4HadronElasticPhysics              # a hadron elastic physics module
+/SEE/physics/addPhysics             G4HadronPhysicsFTFP_BERT            # a hadron inelastic physics module
+
+##############
+### Cuts
+## Production range cuts:
+/cuts/setLowEdge                    10 eV     # Lower limit for cuts in energy, default: 990 eV
+
+/SEE/cuts/electron          BEOL    100 nm
+/SEE/cuts/electron          Bulk    100 nm
+/SEE/cuts/electron          SV      100 nm
+/SEE/cuts/positron          BEOL    100 nm
+/SEE/cuts/positron          Bulk    100 nm
+/SEE/cuts/positron          SV      100 nm
+
+## Tracking cuts:
+/process/em/lowestElectronEnergy    10 eV     # default: 100 eV for EMopt3, EMopt4, EMLivermore and EMPenelope, otherwise 1 keV
+/process/em/lowestMuHadEnergy       100 eV    # default: 1 keV
+
+##############
+### Initialize
+/run/initialize
+
+
+##############
+### Visualization
+# Reduce the primary particle number to few hundred when using visualization!
+# /control/execute examples/vis.mac
+
+
+##############
+### Primaries (General Particle Source)
+/gps/particle                       proton
+/gps/ene/mono                       10 MeV
+/gps/direction                      0 0 -1
+/gps/pos/centre                     0 0 10 um
+/gps/pos/type                       Plane
+/gps/pos/shape                      Rectangle
+/gps/pos/halfx                      1.5 um
+/gps/pos/halfy                      1.5 um
+
+##############
+### Scoring
+/SEE/scoring/standard/Edep          0
+/SEE/scoring/setHistogram           lin     100     0       100     keV
+/SEE/scoring/standard/Edep          1
+/SEE/scoring/setHistogram           log     100     0.01    1000    keV
+
+/SEE/scoring/standard/Ekin          0       proton
+/SEE/scoring/setHistogram           log     100     1       11000   keV
+/SEE/scoring/standard/Ekin          1       e-
+/SEE/scoring/setHistogram           log     100     0.01    100     keV
+/SEE/scoring/standard/Ekin          2       gamma
+/SEE/scoring/setHistogram           log     100     1       10000   keV
+
+/SEE/scoring/standard/LET           0       Opt1
+/SEE/scoring/setHistogram           log     100     0.001   10
+
+/SEE/scoring/dumpHistogramsAfter    5000
+
+##############
+### Run
+/run/beamOn                         50000
